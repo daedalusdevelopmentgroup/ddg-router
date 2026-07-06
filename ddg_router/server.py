@@ -44,7 +44,14 @@ class _Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n) or b"{}")
         except Exception as e:
             return self._json(400, {"error": "bad_request", "message": str(e)})
-        resp = self._client().post(self.path.split("?", 1)[0], body)
+        path = self.path.split("?", 1)[0]
+        # normalize model: strip "ddg/" prefix; map "auto"/"" -> a real default,
+        # so `ddg/auto` (the default-provider id) resolves to an actual model.
+        m = body.get("model")
+        if isinstance(m, str):
+            m = m.split("/", 1)[-1] if m.startswith("ddg/") else m
+            body["model"] = os.environ.get("DDG_DEFAULT_MODEL", "glm-4.5-air") if m in ("", "auto") else m
+        resp = self._client().post(path, body)
         code = 200
         if isinstance(resp, dict) and resp.get("error"):
             code = 402 if resp.get("error") == "payment_required" else 502
