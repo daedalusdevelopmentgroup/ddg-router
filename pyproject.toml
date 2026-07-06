@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ddg-router"
+version = "0.1.0"
+description = "Local OpenAI-compatible x402-paying proxy for DDG Agent-Payable Services — make DDG your agent runtime's default provider."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "0xcircuitbreaker", email = "0xcircuitbreaker@protonmail.com" }]
+keywords = ["x402", "ai-agents", "openai", "proxy", "router", "base", "usdc", "agent-payments"]
+dependencies = ["ddg-agent-services-mcp[openai]>=0.4.1"]
+
+[project.scripts]
+ddg-router = "ddg_router.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ddg_router"]
