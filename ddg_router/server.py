@@ -21,6 +21,14 @@ UPSTREAM = os.environ.get("DDG_UPSTREAM", "https://agents.daedalusdevelopmentgro
 _FREE_GET = ("/v1/models", "/v1/model-catalog")
 
 
+def normalize_model(model, default: str = "glm-4.5-air"):
+    """Strip a leading ``ddg/`` and map ``auto``/``""`` -> the default model id."""
+    if not isinstance(model, str):
+        return model
+    m = model.split("/", 1)[-1] if model.startswith("ddg/") else model
+    return default if m in ("", "auto") else m
+
+
 class _Handler(BaseHTTPRequestHandler):
     agent_id = "ddg-router"
     private_key: str | None = None
@@ -47,10 +55,8 @@ class _Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         # normalize model: strip "ddg/" prefix; map "auto"/"" -> a real default,
         # so `ddg/auto` (the default-provider id) resolves to an actual model.
-        m = body.get("model")
-        if isinstance(m, str):
-            m = m.split("/", 1)[-1] if m.startswith("ddg/") else m
-            body["model"] = os.environ.get("DDG_DEFAULT_MODEL", "glm-4.5-air") if m in ("", "auto") else m
+        if isinstance(body.get("model"), str):
+            body["model"] = normalize_model(body["model"], os.environ.get("DDG_DEFAULT_MODEL", "glm-4.5-air"))
         resp = self._client().post(path, body)
         code = 200
         if isinstance(resp, dict) and resp.get("error"):
